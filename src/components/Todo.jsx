@@ -1,21 +1,20 @@
 import PositionedMenu from "./options";
-import { TaskContext } from "../contexts/TaskContext";
-import { useMemo, useState, useContext } from "react";
+import { useTask } from "../hooks/useTask";
+import { useMemo, useState } from "react";
 
 export function Todo({ tab }) {
-  const [tasks] = useContext(TaskContext);
+  const tasks = useTask();
   const filteredTasks = useMemo(() => {
     return tab === "All"
       ? tasks
       : tab === "Completed"
       ? tasks.filter((todo) => todo.completed)
       : tasks.filter((todo) => !todo.completed);
-  
   }, [tasks, tab]);
 
   return (
     <main className="flex flex-col gap-2 justify-center items-center w-full">
-      {tasks.length > 0 ? (
+      {filteredTasks.length > 0 ? (
         filteredTasks.map((todo) => (
           <div
             key={todo.id}

@@ -7,15 +7,16 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { TaskContext } from "../contexts/TaskContext";
-import { useContext } from "react";
+import { useTask, useDispatch } from "../hooks/useTask";
+import { useToast } from "../hooks/useToast";
+import { useMemo, useState } from "react";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogTitle from "@mui/material/DialogTitle";
 
 export default function PositionedMenu({ todoId }) {
-  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -23,13 +24,23 @@ export default function PositionedMenu({ todoId }) {
   const handleClose = () => {
     setAnchorEl(null);
   };
-  const [tasks, setTasks] = useContext(TaskContext);
-  const currentTask = tasks.find((todo) => todo.id === todoId);
-  const [openConfirmation, setOpenConfirmation] = React.useState(false);
-  const [openEdit, setOpenEdit] = React.useState(false);
-  const [editFormData, setEditFormData] = React.useState({
-    title: currentTask.title,
-    description: currentTask.description,
+
+  const tasks = useTask();
+  const dispatch = useDispatch();
+  const showToast = useToast();
+
+  const currentTask = useMemo(
+    () => tasks.find((todo) => todo.id === todoId),
+    [tasks, todoId]
+  );
+
+  const [openConfirmation, setOpenConfirmation] = useState(false);
+
+  const [openEdit, setOpenEdit] = useState(false);
+
+  const [editFormData, setEditFormData] = useState({
+    title: currentTask ? currentTask.title : "",
+    description: currentTask ? currentTask.description : "",
   });
 
   const handleClickOpenConfirmation = () => {
@@ -40,6 +51,7 @@ export default function PositionedMenu({ todoId }) {
     setOpenConfirmation(false);
   };
   const handleClickOpenEdit = () => {
+    if (!currentTask) return;
     setEditFormData({
       title: currentTask.title,
       description: currentTask.description,
@@ -51,27 +63,17 @@ export default function PositionedMenu({ todoId }) {
     setOpenEdit(false);
   };
   const handleCompleted = (todoId) => {
-    const updatedTasks = tasks.map((todo) =>
-      todo.id == todoId ? { ...todo, completed: !todo.completed } : todo
-    );
-    setTasks(updatedTasks);
+    dispatch({
+      type: "UPDATE_TASK",
+      payload: { id: todoId, completed: !currentTask.completed },
+    });
   };
   const handleDelete = (todoId) => {
-    const updatedTasks = tasks.filter((todo) => todo.id !== todoId);
-    setTasks(updatedTasks);
+    dispatch({ type: "DELETE_TASK", payload: todoId });
     handleCloseConfirmation();
   };
   const handleEdit = (todoId) => {
-    const updatedTask = tasks.map((todo) =>
-      todo.id === todoId
-        ? {
-            ...todo,
-            title: editFormData.title,
-            description: editFormData.description,
-          }
-        : todo
-    );
-    setTasks(updatedTask);
+    dispatch({ type: "UPDATE_TASK", payload: { id: todoId, ...editFormData } });
     handleCloseEdit();
   };
 
@@ -123,6 +125,9 @@ export default function PositionedMenu({ todoId }) {
           onClick={() => {
             handleCompleted(todoId);
             handleClose();
+            currentTask.completed
+              ? showToast("success", "Task Became Uncompleted Successfully")
+              : showToast("success", "Task Became Completed Successfully");
           }}
           sx={{
             "&:hover": {
@@ -193,7 +198,11 @@ export default function PositionedMenu({ todoId }) {
           </Button>
           <Button
             className="!bg-[#f34848] active:!scale-95 !rounded-xl !text-sm sm:!text-base !font-medium !text-[#F5F5F5] cursor-pointer  hover:!bg-[#f91f1f] hover:!text-white transition-all duration-300"
-            onClick={() => handleDelete(todoId)}
+            onClick={() => {
+              handleDelete(todoId);
+              handleCloseConfirmation();
+              showToast("success", "Task Deleted Successfully");
+            }}
             autoFocus
           >
             Agree
@@ -221,6 +230,8 @@ export default function PositionedMenu({ todoId }) {
           onSubmit={(e) => {
             e.preventDefault();
             handleEdit(todoId);
+            handleCloseEdit();
+            showToast("success", "Task Edited  Successfully");
           }}
           className="flex flex-col gap-3.5 justify-center items-center w-full max-w-md rounded-full"
         >

@@ -7,6 +7,8 @@ import Fab from "@mui/material/Fab";
 import EditIcon from "@mui/icons-material/Edit";
 import { useSpring, animated } from "@react-spring/web";
 import { Input } from "./Input";
+import { useState } from "react";
+
 const Fade = React.forwardRef(function Fade(props, ref) {
   const {
     children,
@@ -67,7 +69,7 @@ const style = {
 };
 
 export default function SpringModal() {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 

@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { TaskContext } from "../contexts/TaskContext";
-import { useContext } from "react";
-import { v4 as uid } from "uuid";
+import { useToast } from "../hooks/useToast";
+import { useDispatch } from "../hooks/useTask";
+
+
 
 export function Input({ closeModal }) {
-  const [tasks, setTasks] = useContext(TaskContext);
+  const dispatch = useDispatch();
+  const showToast = useToast();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -13,14 +15,9 @@ export function Input({ closeModal }) {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const newTodo = {
-          id: uid(),
-          title: formData.title,
-          description: formData.description,
-          completed: false,
-        };
-        setTasks([...tasks, newTodo]);
+        dispatch({ type: "ADD_TASK", payload: { formData } });
         closeModal();
+        showToast("success", "Task Added Successfully");
       }}
       className="flex flex-col gap-3.5 justify-center items-center w-full max-w-md rounded-full"
     >
